@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JoyFoods | Entregas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #ea1d2c; --bg: #f4f5f7; --text: #2d3436; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--text); padding-bottom: 50px; }
+        
+        header { background: #111; color: #fff; padding: 20px; text-align: center; font-weight: 900; font-size: 1.2rem; }
+        .container { max-width: 600px; margin: 20px auto; padding: 0 15px; }
+        
+        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 5px solid var(--primary); }
+        .c-title { font-weight: 900; font-size: 1.1rem; margin-bottom: 5px; }
+        .c-end { color: #555; font-size: 0.9rem; margin-bottom: 10px; line-height: 1.4; }
+        .c-val { font-weight: 900; color: #118c4f; font-size: 1.1rem; margin-bottom: 15px; }
+        
+        .btn { background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 900; width: 100%; cursor: pointer; font-size: 1rem; }
+        .btn-refresh { background: #111; margin-bottom: 20px; }
+        
+        /* Modal do PIN */
+        #pin-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+        .pin-box { background: #fff; padding: 30px 20px; border-radius: 16px; width: 100%; max-width: 350px; text-align: center; }
+        .pin-box h3 { font-weight: 900; margin-bottom: 10px; }
+        .pin-input { font-size: 2rem; letter-spacing: 10px; text-align: center; width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 20px; outline: none; }
+        .pin-input:focus { border-color: var(--primary); }
+        .error-msg { color: var(--primary); font-weight: 700; margin-bottom: 15px; display: none; }
+    </style>
+</head>
+<body>
+
+<header>🛵 Central do Motoboy</header>
+
+<div class="container">
+    <button class="btn btn-refresh" onclick="loadEntregas()">🔄 Atualizar Rotas</button>
+    <div id="entregas-list">
+        <p style="text-align:center; padding: 20px; color:#777; font-weight:bold;">Carregando entregas...</p>
+    </div>
+</div>
+
+<!-- Modal Pedir PIN -->
+<div id="pin-modal">
+    <div class="pin-box">
+        <h3>Confirmar Entrega</h3>
+        <p style="color:#666; font-size:0.85rem; margin-bottom: 20px;">Peça o código de 4 dígitos para o cliente para finalizar.</p>
+        <input type="number" id="pin-code" class="pin-input" placeholder="0000" maxlength="4">
+        <p class="error-msg" id="pin-error">❌ PIN Incorreto!</p>
+        <button class="btn" id="btn-confirmar" onclick="validatePIN()">Confirmar Entrega ✅</button>
+        <button class="btn" style="background:#ddd; color:#333; margin-top:10px;" onclick="closeModal()">Cancelar</button>
+    </div>
+</div>
+
+<script>
+    // ⚠️ COLOQUE SUA URL DO GOOGLE SCRIPT AQUI
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQjSrJA8FnIpxfrSfw_cPjpeTLvPfhrUotlJUaU6EylD8TJNsQ5LPTVHIRHL9PK-rXIw/exec';
+    let currentOrderId = null;
+
+    async function loadEntregas() {
+        const list = document.getElementById('entregas-list');
+        list.innerHTML = '<p style="text-align:center; padding: 20px; color:#777; font-weight:bold;">Buscando pacotes... 📦</p>';
+        try {
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST', body: JSON.stringify({action: 'getMotoboyData'})
+            });
+            const result = await res.json();
+            
+            if(result.entregas.length === 0) {
+                list.innerHTML = '<p style="text-align:center; padding: 20px; color:#118c4f; font-weight:bold;">Nenhuma entrega pendente! Bora descansar. ☕</p>';
+                return;
+            }
+
+            list.innerHTML = result.entregas.map(e => `
+                <div class="card">
+                    <div class="c-title">👤 ${e.cliente}</div>
+                    <div class="c-end">📍 ${e.endereco}</div>
+                    <div class="c-val">A Receber: ${e.total}</div>
+                    <button class="btn" onclick="openModal('${e.id}')">Cheguei! Pedir PIN</button>
+                </div>
+            `).join('');
+        } catch (e) {
+            list.innerHTML = '<p style="text-align:center; color:red; font-weight:bold;">Erro ao conectar.</p>';
+        }
+    }
+
+    function openModal(id) {
+        currentOrderId = id;
+        document.getElementById('pin-code').value = '';
+        document.getElementById('pin-error').style.display = 'none';
+        document.getElementById('pin-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('pin-modal').style.display = 'none';
+        currentOrderId = null;
+    }
+
+    async function validatePIN() {
+        const pin = document.getElementById('pin-code').value;
+        const btn = document.getElementById('btn-confirmar');
+        if(pin.length < 4) return;
+
+        btn.disabled = true;
+        btn.innerText = 'Validando...';
+        document.getElementById('pin-error').style.display = 'none';
+
+        try {
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST', body: JSON.stringify({action: 'confirmDeliveryPIN', id: currentOrderId, pin: pin})
+            });
+            const result = await res.json();
+            
+            if(result.status === 'success') {
+                alert("✅ Sucesso! Entrega baixada no sistema.");
+                closeModal();
+                loadEntregas();
+            } else {
+                document.getElementById('pin-error').style.display = 'block';
+            }
+        } catch (e) {
+            alert("Erro de conexão.");
+        }
+        btn.disabled = false;
+        btn.innerText = 'Confirmar Entrega ✅';
+    }
+
+    window.onload = loadEntregas;
+</script>
+</body>
+</html>
