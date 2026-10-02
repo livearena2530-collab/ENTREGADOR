@@ -1,0 +1,17 @@
+{
+"name": "JoyFoods Entregador",
+"short_name": "Entregas",
+"description": "App oficial para os motoboys da JoyFoods",
+"start_url": "./motoboy.html",
+"display": "standalone",
+"background_color": "#f4f5f7",
+"theme_color": "#111111",
+"icons": [
+{
+"src": "https://cdn-icons-png.flaticon.com/512/2956/2956869.png",
+"sizes": "512x512",
+"type": "image/png",
+"purpose": "any maskable"
+}
+]
+}
