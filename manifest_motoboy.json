@@ -2,7 +2,7 @@
 "name": "JoyFoods Entregador",
 "short_name": "Entregas",
 "description": "App oficial para os motoboys da JoyFoods",
-"start_url": "https://livearena2530-collab.github.io/ENTREGADOR/idex.html",
+"start_url": "https://livearena2530-collab.github.io/ENTREGADOR/index.html",
 "display": "standalone",
 "background_color": "#111111",
 "theme_color": "#ea1d2c",
