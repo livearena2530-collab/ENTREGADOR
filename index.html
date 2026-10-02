@@ -2,65 +2,195 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JoyFoods | Entregas</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#111111">
+    <title>Entregas | JoyFoods</title>
+    
+    <!-- Link para o Manifest PWA (que transforma em App) -->
+    <link rel="manifest" href="manifest_motoboy.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --primary: #ea1d2c; --bg: #f4f5f7; --text: #2d3436; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); color: var(--text); padding-bottom: 50px; }
+        :root { --primary: #ea1d2c; --bg: #f4f5f7; --text: #2d3436; --white: #fff; --success: #118c4f; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); padding-bottom: 80px; overflow-x: hidden; }
         
-        header { background: #111; color: #fff; padding: 20px; text-align: center; font-weight: 900; font-size: 1.2rem; }
-        .container { max-width: 600px; margin: 20px auto; padding: 0 15px; }
+        /* HEADER DO APP */
+        header { 
+            background: #111; color: var(--white); padding: 18px 20px; 
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .app-title { font-weight: 900; font-size: 1.25rem; display: flex; align-items: center; gap: 8px; }
+        .btn-refresh { 
+            background: #222; border: 1px solid #444; color: #fff; padding: 8px 14px; 
+            border-radius: 50px; font-weight: 800; font-size: 0.85rem; cursor: pointer; transition: 0.2s;
+        }
+        .btn-refresh:active { transform: scale(0.95); background: #333; }
+
+        .container { padding: 20px; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; }
+
+        /* CARTÕES EXPANSÍVEIS (ACORDEÃO) */
+        .delivery-card { 
+            background: var(--white); border-radius: 16px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04); overflow: hidden;
+            border-left: 5px solid var(--primary); transition: 0.3s ease;
+        }
         
-        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 5px solid var(--primary); }
-        .c-title { font-weight: 900; font-size: 1.1rem; margin-bottom: 5px; }
-        .c-end { color: #555; font-size: 0.9rem; margin-bottom: 10px; line-height: 1.4; }
-        .c-val { font-weight: 900; color: #118c4f; font-size: 1.1rem; margin-bottom: 15px; }
+        .card-header { 
+            display: flex; align-items: center; padding: 16px 20px; 
+            cursor: pointer; position: relative; gap: 15px; background: var(--white);
+        }
+        .card-icon { 
+            width: 42px; height: 42px; background: #ffebee; color: var(--primary); 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+        }
+        .card-preview { flex: 1; }
+        .card-preview h4 { font-weight: 900; font-size: 1.05rem; margin-bottom: 2px; color: #111; }
+        .address-snippet { font-size: 0.85rem; color: #777; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
         
-        .btn { background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 900; width: 100%; cursor: pointer; font-size: 1rem; }
-        .btn-refresh { background: #111; margin-bottom: 20px; }
+        .card-arrow { 
+            font-size: 0.8rem; color: #aaa; transition: transform 0.3s ease; font-weight: 900;
+        }
         
-        /* Modal do PIN */
-        #pin-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
-        .pin-box { background: #fff; padding: 30px 20px; border-radius: 16px; width: 100%; max-width: 350px; text-align: center; }
-        .pin-box h3 { font-weight: 900; margin-bottom: 10px; }
-        .pin-input { font-size: 2rem; letter-spacing: 10px; text-align: center; width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 20px; outline: none; }
-        .pin-input:focus { border-color: var(--primary); }
-        .error-msg { color: var(--primary); font-weight: 700; margin-bottom: 15px; display: none; }
+        /* CORPO DO CARTÃO (ESCONDIDO POR PADRÃO) */
+        .card-body { 
+            max-height: 0; overflow: hidden; padding: 0 20px; 
+            background: #fafafa; transition: max-height 0.3s ease, padding 0.3s ease;
+            border-top: 1px solid transparent;
+        }
+        
+        /* CLASSE DE ABERTO */
+        .delivery-card.expanded .card-arrow { transform: rotate(180deg); color: var(--primary); }
+        .delivery-card.expanded .card-body { max-height: 500px; padding: 20px; border-top-color: #eee; }
+
+        /* DETALHES INTERNOS DO CARTÃO */
+        .info-row { margin-bottom: 12px; }
+        .info-row span { display: block; font-size: 0.75rem; color: #888; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+        .info-row strong { font-size: 0.95rem; font-weight: 700; color: #333; line-height: 1.4; }
+        .highlight strong { color: var(--success); font-size: 1.2rem; font-weight: 900; }
+        
+        .btn-action { 
+            background: var(--primary); color: var(--white); border: none; 
+            padding: 16px; border-radius: 12px; font-weight: 900; width: 100%; 
+            font-size: 1.05rem; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 15px rgba(234, 29, 44, 0.3);
+            transition: 0.2s;
+        }
+        .btn-action:active { transform: scale(0.98); background: #cc1523; }
+
+        /* MODAL BOTTOM SHEET (TIPO IFOOD/UBER) */
+        .overlay { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
+            z-index: 999; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(2px);
+        }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+        
+        .bottom-sheet {
+            position: fixed; bottom: -100%; left: 0; width: 100%;
+            background: var(--white); border-radius: 24px 24px 0 0;
+            padding: 25px 20px 40px; z-index: 1000; transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.1); text-align: center;
+        }
+        .bottom-sheet.open { bottom: 0; }
+        
+        .drag-bar { width: 40px; height: 5px; background: #ddd; border-radius: 10px; margin: 0 auto 20px; }
+        .bottom-sheet h3 { font-weight: 900; font-size: 1.3rem; margin-bottom: 8px; color: #111; }
+        .bottom-sheet p { font-size: 0.9rem; color: #666; font-weight: 600; margin-bottom: 20px; }
+        
+        .pin-input { 
+            font-size: 2.5rem; letter-spacing: 15px; text-align: center; 
+            width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 12px; 
+            margin-bottom: 15px; outline: none; background: #fafafa; font-weight: 900; color: var(--primary);
+        }
+        .pin-input:focus { border-color: var(--primary); background: #fff; }
+        .error-msg { color: var(--primary); font-weight: 800; margin-bottom: 15px; display: none; }
+        
+        .btn-cancel { background: #f0f0f0; color: #555; margin-top: 10px; box-shadow: none; }
+
+        /* BANNER DE INSTALAÇÃO PWA */
+        #pwa-banner {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #111; color: #fff; padding: 12px 15px; border-radius: 12px;
+            display: none; align-items: center; gap: 10px; z-index: 900; width: 90%; max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .pwa-banner-text { flex: 1; font-size: 0.8rem; line-height: 1.3; }
+        .pwa-banner-text strong { display: block; font-size: 0.9rem; color: var(--success); }
+        .pwa-btn { background: var(--primary); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 800; font-size: 0.8rem; cursor: pointer; }
+
     </style>
 </head>
 <body>
 
-<header>🛵 Central do Motoboy</header>
+<header>
+    <div class="app-title">🛵 App Entregador</div>
+    <button class="btn-refresh" onclick="loadEntregas()">Atualizar</button>
+</header>
 
-<div class="container">
-    <button class="btn btn-refresh" onclick="loadEntregas()">🔄 Atualizar Rotas</button>
-    <div id="entregas-list">
-        <p style="text-align:center; padding: 20px; color:#777; font-weight:bold;">Carregando entregas...</p>
-    </div>
+<div class="container" id="entregas-list">
+    <p style="text-align:center; padding: 40px; color:#777; font-weight:800;">Buscando rotas... 📡</p>
 </div>
 
-<!-- Modal Pedir PIN -->
-<div id="pin-modal">
-    <div class="pin-box">
-        <h3>Confirmar Entrega</h3>
-        <p style="color:#666; font-size:0.85rem; margin-bottom: 20px;">Peça o código de 4 dígitos para o cliente para finalizar.</p>
-        <input type="number" id="pin-code" class="pin-input" placeholder="0000" maxlength="4">
-        <p class="error-msg" id="pin-error">❌ PIN Incorreto!</p>
-        <button class="btn" id="btn-confirmar" onclick="validatePIN()">Confirmar Entrega ✅</button>
-        <button class="btn" style="background:#ddd; color:#333; margin-top:10px;" onclick="closeModal()">Cancelar</button>
+<!-- Modal Bottom Sheet (Puxa pra cima) -->
+<div class="overlay" id="overlay" onclick="closeModal()"></div>
+<div class="bottom-sheet" id="pin-sheet">
+    <div class="drag-bar"></div>
+    <h3>Confirmar Entrega ✅</h3>
+    <p>Solicite o código de 4 dígitos ao cliente.</p>
+    <input type="tel" id="pin-code" class="pin-input" placeholder="0000" maxlength="4" autocomplete="off">
+    <p class="error-msg" id="pin-error">❌ PIN Incorreto ou Pedido não encontrado!</p>
+    <button class="btn-action" id="btn-confirmar" onclick="validatePIN()">Validar Código</button>
+    <button class="btn-action btn-cancel" onclick="closeModal()">Cancelar</button>
+</div>
+
+<!-- Banner Instalador PWA -->
+<div id="pwa-banner">
+    <div class="pwa-banner-text">
+        <strong>Instale o App!</strong>
+        Tenha as entregas na tela inicial.
     </div>
+    <button class="pwa-btn" onclick="installApp()">Instalar</button>
 </div>
 
 <script>
     // ⚠️ COLOQUE SUA URL DO GOOGLE SCRIPT AQUI
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQjSrJA8FnIpxfrSfw_cPjpeTLvPfhrUotlJUaU6EylD8TJNsQ5LPTVHIRHL9PK-rXIw/exec';
+    
     let currentOrderId = null;
 
+    // --- SISTEMA PWA (OFFLINE & INSTALAÇÃO) ---
+    let deferredPrompt;
+    const swCode = `
+        self.addEventListener('install', (e) => self.skipWaiting());
+        self.addEventListener('activate', (e) => self.clients.claim());
+        self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request).catch(() => new Response('Offline'))));
+    `;
+    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register(URL.createObjectURL(swBlob));
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('pwa-banner').style.display = 'flex';
+    });
+
+    function installApp() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(() => {
+                deferredPrompt = null;
+                document.getElementById('pwa-banner').style.display = 'none';
+            });
+        }
+    }
+
+    // --- LÓGICA DO APP DO MOTOBOY ---
     async function loadEntregas() {
         const list = document.getElementById('entregas-list');
-        list.innerHTML = '<p style="text-align:center; padding: 20px; color:#777; font-weight:bold;">Buscando pacotes... 📦</p>';
+        list.innerHTML = '<p style="text-align:center; padding: 40px; color:#777; font-weight:800;">Buscando rotas... 📡</p>';
+        
         try {
             const res = await fetch(SCRIPT_URL, {
                 method: 'POST', body: JSON.stringify({action: 'getMotoboyData'})
@@ -68,32 +198,71 @@
             const result = await res.json();
             
             if(result.entregas.length === 0) {
-                list.innerHTML = '<p style="text-align:center; padding: 20px; color:#118c4f; font-weight:bold;">Nenhuma entrega pendente! Bora descansar. ☕</p>';
+                list.innerHTML = `
+                    <div style="text-align:center; padding: 50px 20px;">
+                        <span style="font-size: 3rem;">☕</span>
+                        <h3 style="margin-top:15px; font-weight:900; color:#333;">Nenhuma entrega no momento.</h3>
+                        <p style="color:#777; font-weight:600; font-size:0.9rem; margin-top:5px;">Aguarde o painel da cozinha liberar as rotas.</p>
+                    </div>`;
                 return;
             }
 
-            list.innerHTML = result.entregas.map(e => `
-                <div class="card">
-                    <div class="c-title">👤 ${e.cliente}</div>
-                    <div class="c-end">📍 ${e.endereco}</div>
-                    <div class="c-val">A Receber: ${e.total}</div>
-                    <button class="btn" onclick="openModal('${e.id}')">Cheguei! Pedir PIN</button>
-                </div>
-            `).join('');
+            list.innerHTML = result.entregas.map(e => {
+                // Pega só a rua para o resumo do cartão
+                const enderecoResumo = e.endereco.split(',')[0]; 
+                
+                return `
+                <div class="delivery-card" id="card-${e.id}">
+                    <div class="card-header" onclick="toggleCard('${e.id}')">
+                        <div class="card-icon">👤</div>
+                        <div class="card-preview">
+                            <h4>${e.cliente}</h4>
+                            <div class="address-snippet">📍 ${enderecoResumo}</div>
+                        </div>
+                        <div class="card-arrow">▼</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-row">
+                            <span>Endereço Completo</span>
+                            <strong>${e.endereco}</strong>
+                        </div>
+                        <div class="info-row highlight">
+                            <span>Receber do Cliente</span>
+                            <strong>${e.total}</strong>
+                        </div>
+                        <button class="btn-action" onclick="openModal('${e.id}')">Cheguei! Pedir PIN</button>
+                    </div>
+                </div>`;
+            }).join('');
+            
         } catch (e) {
-            list.innerHTML = '<p style="text-align:center; color:red; font-weight:bold;">Erro ao conectar.</p>';
+            list.innerHTML = '<p style="text-align:center; color:red; font-weight:800;">Erro ao conectar. Verifique sua internet.</p>';
         }
+    }
+
+    // Função de Abre e Fecha (Acordeão)
+    function toggleCard(id) {
+        const card = document.getElementById(`card-${id}`);
+        // Fecha todos os outros antes de abrir um novo (opcional, mas fica mais limpo)
+        document.querySelectorAll('.delivery-card').forEach(c => {
+            if(c.id !== `card-${id}`) c.classList.remove('expanded');
+        });
+        card.classList.toggle('expanded');
     }
 
     function openModal(id) {
         currentOrderId = id;
         document.getElementById('pin-code').value = '';
         document.getElementById('pin-error').style.display = 'none';
-        document.getElementById('pin-modal').style.display = 'flex';
+        document.getElementById('overlay').classList.add('active');
+        document.getElementById('pin-sheet').classList.add('open');
+        // Foca automaticamente no campo do PIN (útil no celular)
+        setTimeout(() => document.getElementById('pin-code').focus(), 300);
     }
 
     function closeModal() {
-        document.getElementById('pin-modal').style.display = 'none';
+        document.getElementById('overlay').classList.remove('active');
+        document.getElementById('pin-sheet').classList.remove('open');
         currentOrderId = null;
     }
 
@@ -103,7 +272,7 @@
         if(pin.length < 4) return;
 
         btn.disabled = true;
-        btn.innerText = 'Validando...';
+        btn.innerText = 'Validando... ⏳';
         document.getElementById('pin-error').style.display = 'none';
 
         try {
@@ -113,19 +282,25 @@
             const result = await res.json();
             
             if(result.status === 'success') {
-                alert("✅ Sucesso! Entrega baixada no sistema.");
                 closeModal();
-                loadEntregas();
+                // Efeito visual de sucesso no cartão antes de recarregar
+                const card = document.getElementById(`card-${currentOrderId}`);
+                if(card) {
+                    card.style.borderLeftColor = 'var(--success)';
+                    card.style.opacity = '0.5';
+                }
+                setTimeout(loadEntregas, 800);
             } else {
                 document.getElementById('pin-error').style.display = 'block';
             }
         } catch (e) {
-            alert("Erro de conexão.");
+            alert("Erro de conexão. Tente novamente.");
         }
         btn.disabled = false;
-        btn.innerText = 'Confirmar Entrega ✅';
+        btn.innerText = 'Validar Código';
     }
 
+    // Iniciar
     window.onload = loadEntregas;
 </script>
 </body>
