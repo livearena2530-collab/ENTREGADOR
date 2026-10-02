@@ -78,7 +78,6 @@
         }
         .btn-action:active { transform: scale(0.98); background: #cc1523; }
 
-        /* MODAL BOTTOM SHEET (TIPO IFOOD/UBER) */
         .overlay { 
             position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
             z-index: 999; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(2px);
@@ -146,7 +145,7 @@
 <!-- Banner Instalador PWA -->
 <div id="pwa-banner">
     <div class="pwa-banner-text">
-        <strong>Instale o App!</strong>
+        <strong>Instalar Aplicativo!</strong>
         Tenha as entregas na tela inicial.
     </div>
     <button class="pwa-btn" onclick="installApp()">Instalar</button>
@@ -160,14 +159,11 @@
 
     // --- SISTEMA PWA (OFFLINE & INSTALAÇÃO) ---
     let deferredPrompt;
-    const swCode = `
-        self.addEventListener('install', (e) => self.skipWaiting());
-        self.addEventListener('activate', (e) => self.clients.claim());
-        self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request).catch(() => new Response('Offline'))));
-    `;
-    const swBlob = new Blob([swCode], { type: 'application/javascript' });
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register(URL.createObjectURL(swBlob));
+        // Registra o arquivo sw_motoboy.js que você criou no GitHub
+        navigator.serviceWorker.register('sw_motoboy.js')
+            .then(() => console.log('Motor PWA do Entregador ativado!'))
+            .catch(err => console.log('Erro no Service Worker:', err));
     }
 
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -243,7 +239,7 @@
     // Função de Abre e Fecha (Acordeão)
     function toggleCard(id) {
         const card = document.getElementById(`card-${id}`);
-        // Fecha todos os outros antes de abrir um novo (opcional, mas fica mais limpo)
+        // Fecha todos os outros antes de abrir um novo
         document.querySelectorAll('.delivery-card').forEach(c => {
             if(c.id !== `card-${id}`) c.classList.remove('expanded');
         });
@@ -256,7 +252,7 @@
         document.getElementById('pin-error').style.display = 'none';
         document.getElementById('overlay').classList.add('active');
         document.getElementById('pin-sheet').classList.add('open');
-        // Foca automaticamente no campo do PIN (útil no celular)
+        // Foca automaticamente no campo do PIN
         setTimeout(() => document.getElementById('pin-code').focus(), 300);
     }
 
